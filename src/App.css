@@ -1,0 +1,26 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: black --default;
+}
+
+html,body {
+  @apply size-full bg-base-100;
+}
+
+#root {
+  @apply size-full absolute select-none;
+}
+
+header {
+  @apply fixed top-0 h-[100px] w-full bg-base-300 text-base-content;
+}
+main {
+  @apply py-[100px] size-full bg-base-100 text-base-content;
+}
+footer {
+  @apply fixed bottom-0 h-[100px] w-full bg-base-300 text-base-content;
+}
+
+button.btn {
+  @apply btn-info text-info-content rounded-sm h-[50px] w-[170px];
+}
