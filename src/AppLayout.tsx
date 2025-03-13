@@ -58,7 +58,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
   return (
     <>
       <header className="navbar px-5">
-        <h1 className="navbar-start text-2xl">BG3 Translator</h1>
+        <h1 className="navbar-start text-2xl">BG3 Simple XML Editor</h1>
         <div className="navbar-end gap-x-10">
           <button
             type="button"
