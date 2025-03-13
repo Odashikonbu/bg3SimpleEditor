@@ -62,6 +62,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
 
       if(file != null){
         console.log( `save: ${file}`);
+        setLoadingFile(file);
         const result = await writeXMLFile(rows, file);
         play();
         setMessage(result);
@@ -81,7 +82,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
     if(await isRegistered(overwriteHotkey) == false){
       console.log( `${overwriteHotkey} Shortcut register`);
       await register(overwriteHotkey, async(event) => {
-        if (event.state === 'Pressed') {
+        if (event.state === 'Pressed' && !saveButton.current?.disabled) {
           console.log( `${overwriteHotkey} Shortcut triggered overwrite`);
           overWriteButton.current?.click();
         }
@@ -91,7 +92,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
     if(await isRegistered(saveHotkey) == false){
       console.log( `${saveHotkey} Shortcut register`);
       await register(saveHotkey, async(event) => {
-        if (event.state === 'Pressed') {
+        if (event.state === 'Pressed' && !saveButton.current?.disabled) {
           console.log( `${saveHotkey} Shortcut triggered`);
           saveButton.current?.click();
         }
