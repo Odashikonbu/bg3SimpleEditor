@@ -2,7 +2,7 @@ import { useAtom, useSetAtom } from "jotai";
 import { listen } from "@tauri-apps/api/event";
 import "./App.css";
 
-import { DataGrid, GridColDef, GridRowClassNameParams, GridRowParams } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRowClassNameParams } from '@mui/x-data-grid';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from "@mui/material";
 

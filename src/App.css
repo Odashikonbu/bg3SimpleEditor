@@ -22,5 +22,5 @@ footer {
 }
 
 button.btn {
-  @apply btn-info text-info-content rounded-sm h-[50px] w-[170px];
+  @apply btn-info text-info-content rounded-sm h-[40px] w-[170px];
 }

@@ -1,13 +1,15 @@
 /// <reference types="vite/client" />
 import { useAtom } from "jotai";
-import { ReactNode } from "react";
+import { ReactNode, useRef } from "react";
 import useSound from 'use-sound';
 import clsx from "clsx";
 import { open, save } from '@tauri-apps/plugin-dialog';
+import { register, isRegistered, unregisterAll } from '@tauri-apps/plugin-global-shortcut'
 import { loadingFileAtom, messageAtom, translationAtom } from "./Atoms"
 import { openXMLFile, writeXMLFile } from "./AppModules";
 
 import NotificationSound from './assets/notification.wav';
+import { useEffectOnce } from "react-use";
 
 const AppLayout = ({ children }: { children: ReactNode }) => {
   const [translation] = useAtom(translationAtom);
@@ -16,12 +18,18 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
   const [message, setMessage] = useAtom(messageAtom);
   const [play] = useSound(NotificationSound);
 
+  const overWriteButton = useRef<HTMLButtonElement>(null)
+  const saveButton = useRef<HTMLButtonElement>(null)
+  const openButton = useRef<HTMLButtonElement>(null)
+
+
   const openFIle = async() => {
     const file = await open({
       multiple: false,
       directory: false,
       filters: [ {name: 'XML file', extensions: ['xml', 'XML']} ]
     });
+    console.log( `open: ${file}`);
     if(file != null){
       const result = await openXMLFile(file);
       if (result.messageType == 1) {
@@ -32,15 +40,20 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
   }
 
   const overwriteFile = async() => {
-    if(loadingFile){
+    console.log(`loading file: ${loadingFile}`)
+    if(loadingFile != undefined){
+      console.log( `overwrite: ${loadingFile}`);
       const result = await writeXMLFile(rows, loadingFile)
       setMessage(result);
       play();
+    }else{
+      console.log("no file loaded")
     }
   } 
 
   const selectSavePath = async() => {
-    if(loadingFile){
+    console.log(`loading file: ${loadingFile}`)
+    if(loadingFile != undefined){
       const file = await save({
         filters: [ {name: 'XML file', extensions: ['xml', 'XML']} ],
         defaultPath: loadingFile,
@@ -48,12 +61,55 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
       })
 
       if(file != null){
+        console.log( `save: ${file}`);
         const result = await writeXMLFile(rows, file);
         play();
         setMessage(result);
       }
+    }else{
+      console.log("no file loaded")
     }
   }
+
+  const initHotkey = async() => {
+    const overwriteHotkey = 'CommandOrControl+S';
+    const saveHotkey = 'CommandOrControl+Shift+S';
+    const openHotkey = 'CommandOrControl+O';
+
+    await unregisterAll();
+
+    if(await isRegistered(overwriteHotkey) == false){
+      console.log( `${overwriteHotkey} Shortcut register`);
+      await register(overwriteHotkey, async(event) => {
+        if (event.state === 'Pressed') {
+          console.log( `${overwriteHotkey} Shortcut triggered overwrite`);
+          overWriteButton.current?.click();
+        }
+      })
+    }
+
+    if(await isRegistered(saveHotkey) == false){
+      console.log( `${saveHotkey} Shortcut register`);
+      await register(saveHotkey, async(event) => {
+        if (event.state === 'Pressed') {
+          console.log( `${saveHotkey} Shortcut triggered`);
+          saveButton.current?.click();
+        }
+      })
+    }
+
+    if(await isRegistered(openHotkey) == false){
+      console.log( `${openHotkey} Shortcut register`);
+      await register(openHotkey, async(event) => {
+        if (event.state === 'Pressed') {
+          console.log( `${openHotkey} Shortcut triggered`);
+          openButton.current?.click();
+        }
+      })
+    }
+  }
+
+  useEffectOnce(() => {initHotkey()})
 
   return (
     <>
@@ -63,6 +119,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
           <button
             type="button"
             className="btn"
+            ref={openButton}
             onClick={openFIle}
           >
             <span>Open .xml File</span>
@@ -79,6 +136,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
               type="button"
               className="btn"
               disabled={translation.length == 0}
+              ref={overWriteButton}
               onClick={overwriteFile}
             >
               <span>Save Overwrite</span>
@@ -88,6 +146,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
             type="button"
             className="btn"
             disabled={translation.length == 0}
+            ref={saveButton}
             onClick={selectSavePath}
           >
             <span>Save as New File</span>

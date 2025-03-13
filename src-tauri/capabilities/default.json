@@ -10,7 +10,7 @@
     "dialog:default",
     "global-shortcut:allow-is-registered",
     "global-shortcut:allow-register",
-    "global-shortcut:allow-unregister",
+    "global-shortcut:allow-unregister-all",
     { "identifier": "fs:allow-read-text-file", "allow": [{ "path": "**" }] },
     { "identifier": "fs:allow-write-text-file", "allow": [{ "path": "**" }] },
     { "identifier": "fs:allow-exists","allow": [{ "path": "**" }] }
