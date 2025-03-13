@@ -2,7 +2,7 @@ import { useAtom, useSetAtom } from "jotai";
 import { listen } from "@tauri-apps/api/event";
 import "./App.css";
 
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRowClassNameParams, GridRowParams } from '@mui/x-data-grid';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from "@mui/material";
 
@@ -10,6 +10,7 @@ import { useEffectOnce } from "react-use";
 
 import { openXMLFile } from "./AppModules";
 import { loadingFileAtom, messageAtom, translation, translationAtom } from "./Atoms";
+import clsx from "clsx";
 
 const darkTheme = createTheme({
   palette: {
@@ -56,6 +57,7 @@ const App = () => {
       newRows[newRow.index].translatedText = newRow.translatedText
       setRows(newRows)
     }
+    return nl;
   }
 
   return (
@@ -68,12 +70,14 @@ const App = () => {
           columns={columns}
           getRowId={(row) => row.index}
           processRowUpdate={onUpdateRows}
+          getRowClassName={(e: GridRowClassNameParams<translation>) => { 
+            return clsx({ "bg-green-700 text-white": e.row.originText != e.row.translatedText })
+          }}
           onProcessRowUpdateError={ () => {} }
           disableColumnMenu
-          hideFooter
-          hideFooterPagination
           localeText={{ noRowsLabel: 'Drag&Drop .xml File' }}
           paginationMode="client"
+          rowSelection={false}
         />
       </div>
     </ThemeProvider>
