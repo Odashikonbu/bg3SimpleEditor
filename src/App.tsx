@@ -2,7 +2,7 @@ import { useAtom, useSetAtom } from "jotai";
 import { listen } from "@tauri-apps/api/event";
 import "./App.css";
 
-import { DataGrid, GridColDef, GridRowClassNameParams } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRowClassNameParams, GridToolbar } from '@mui/x-data-grid';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from "@mui/material";
 
@@ -25,9 +25,9 @@ const App = () => {
   
   const columns: GridColDef[] = [
     { field: 'index', headerName: 'Index', width: 0 },
-    { field: 'contentuid', headerName: 'UUID', flex: 0.25, sortable: true },
-    { field: 'originText', headerName: 'Original Text', flex: 0.75, sortable: true },
-    { field: 'translatedText', headerName: 'Translated Text', flex: 1, sortable: true, editable: true, resizable: false },
+    { field: 'contentuid', headerName: 'UUID', flex: 0.25, sortable: true, filterable: true },
+    { field: 'originText', headerName: 'Original Text', flex: 0.75, sortable: true, filterable: true },
+    { field: 'translatedText', headerName: 'Translated Text', flex: 1, sortable: true, editable: true, resizable: false, filterable: true },
   ];
 
   useEffectOnce(() => {
@@ -70,11 +70,22 @@ const App = () => {
           columns={columns}
           getRowId={(row) => row.index}
           processRowUpdate={onUpdateRows}
+          disableColumnMenu
+          disableColumnFilter
+          disableColumnSelector
+          disableDensitySelector
           getRowClassName={(e: GridRowClassNameParams<translation>) => { 
             return clsx({ "bg-green-700 text-white": e.row.originText != e.row.translatedText })
           }}
+          slots={{ toolbar: GridToolbar }}
+          slotProps={{
+            toolbar: {
+              showQuickFilter: true,
+              printOptions: { disableToolbarButton: true },
+              csvOptions: { disableToolbarButton: true },
+            },
+          }}
           onProcessRowUpdateError={ () => {} }
-          disableColumnMenu
           localeText={{ noRowsLabel: 'Drag&Drop .xml File' }}
           paginationMode="client"
           rowSelection={false}
