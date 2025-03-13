@@ -36,6 +36,10 @@ export const writeXMLFile = async(contentList: translation[], filePath: string):
     });
   
     const xmlObject = {
+      '?xml': {
+        '@_version': '1.0',
+        '@_encoding': 'UTF-8'
+      },
       contentList: {
         content: contentList.map((item) => ({
           '@_contentuid': item.contentuid,
