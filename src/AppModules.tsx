@@ -4,7 +4,7 @@ import { XMLParser, XMLBuilder } from 'fast-xml-parser';
 import { translation, result, message, dictionary } from "./Atoms";
 import { parse, stringify,  } from 'yaml'
 
-export const openXMLFile = async(path: string):Promise<result> => {
+export const openXMLFile = async(contentList: translation[],path: string):Promise<result> => {
   try {
     const xml = await readTextFile(path);
 
@@ -12,19 +12,19 @@ export const openXMLFile = async(path: string):Promise<result> => {
     const result = parser.parse(xml);
 
     if (!result.contentList || !Array.isArray(result.contentList.content)) {
-      return { messageType: 2, message: "invalid xml!!!", translations: [] }
+      return { messageType: 2, message: "invalid xml!!!", translations: contentList }
     }
 
-    const contentList: translation[] = result.contentList.content.map((item: any, index:number) => ({
+    const newContentList: translation[] = result.contentList.content.map((item: any, index:number) => ({
       index: index,
       contentuid: item['@_contentuid'],
       originText: item['#text'],
       translatedText: item['#text'],
     }));
 
-    return { messageType: 1, message: `loaded xml: ${await basename(path)}`, translations: contentList };
+    return { messageType: 1, message: `loaded xml: ${await basename(path)}`, translations: newContentList };
   } catch (error) {
-    return { messageType: 2, message: `Error!!!: ${error}`, translations: [] };
+    return { messageType: 2, message: `Error!!!: ${error}`, translations: contentList };
   }
 }
 
@@ -159,7 +159,7 @@ export const importDictionary = async(contentList: translation[], path: string):
   }
 }
 
-export const exportDictionary = async(contentList: translation[], path: string) => {
+export const exportDictionary = async(contentList: translation[], path: string):Promise<message> => {
   const dictData = contentList.map((content) => {
     return {
       contentuid: content.contentuid,
@@ -187,4 +187,40 @@ export const exportDictionary = async(contentList: translation[], path: string) 
 
   return { type: 1, text: "translation exported!!!"}
 
+}
+
+export const loadTranslation = async(contentList: translation[], path: string):Promise<result> => {
+  try {
+    const xml = await readTextFile(path);
+    const newTranslation = [...contentList];
+
+    const parser = new XMLParser({ ignoreAttributes: false });
+    const result = parser.parse(xml);
+
+    if (!result.contentList || !Array.isArray(result.contentList.content)) {
+      return { messageType: 2, message: "invalid xml!!!", translations: contentList }
+    }
+
+    const loadedContent: dictionary[] = result.contentList.content.map((item: any) => ({
+      contentuid: item['@_contentuid'],
+      originText: item['#text'],
+      translatedText: item['#text'],
+    }));
+
+    console.log(loadedContent)
+
+    loadedContent.forEach( (item) => {
+      const foundIndex = newTranslation.findIndex(
+        (dct) => dct.contentuid === item.contentuid
+      );
+  
+      if (foundIndex !== -1) {
+        newTranslation[foundIndex].translatedText = item.translatedText;
+      }
+    })
+
+    return { messageType: 1, message: `loaded translation: ${await basename(path)}`, translations: newTranslation };
+  } catch (error) {
+    return { messageType: 2, message: `Error!!!: ${error}`, translations: contentList };
+  }
 }

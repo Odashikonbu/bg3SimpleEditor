@@ -18,6 +18,7 @@ import {
   applyMasterDictionary,
   importDictionary,
   exportDictionary,
+  loadTranslation,
 } from "./AppModules";
 
 import NotificationSound from "./assets/notification.wav";
@@ -37,6 +38,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
 
   const finalizeButton = useRef<HTMLButtonElement>(null);
   const openButton = useRef<HTMLButtonElement>(null);
+  const loadXMLButton = useRef<HTMLButtonElement>(null);
   const saveDictButton = useRef<HTMLButtonElement>(null);
   const importButton = useRef<HTMLButtonElement>(null);
   const exportButton = useRef<HTMLButtonElement>(null);
@@ -52,7 +54,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
     });
     console.log(`open: ${file}`);
     if (file != null) {
-      const result = await openXMLFile(file);
+      const result = await openXMLFile(rows,file);
       if (result.messageType == 1) {
         setLoadingFile(file);
         setRows(result.translations);
@@ -68,6 +70,24 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
       }
     }
   };
+
+  const loadXML = async () => {
+    const file = await open({
+      multiple: false,
+      directory: false,
+      filters: [{ name: "XML file", extensions: ["xml", "XML"] }],
+    });
+    console.log(`open: ${file}`);
+    if (file != null) {
+      const result = await loadTranslation(rows,file);
+      console.log(result)
+      if (result.messageType == 1) {
+        setRows(result.translations);
+        setMessage({ type: 1, text: result.message });
+        setUnSavedTranslation(false);
+      }
+    }
+  }
 
   const importDict = async () => {
     const file = await open({
@@ -221,24 +241,26 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
           </div>
         </div>
         <div className="navbar-end gap-x-5 items-end">
-          <button
-            type="button"
-            ref={importButton}
-            className="btn btn-secondary! bg-gray-300 text-black! h-[30px]! w-[100px]! text-sm"
-            onClick={importDict}
-            disabled={translation.length == 0}
-          >
-            Import
-          </button>
-          <button
-            type="button"
-            ref={exportButton}
-            className="btn btn-secondary! bg-gray-300 text-black! h-[30px]! w-[100px]! text-sm"
-            onClick={exportDict}
-            disabled={translation.length == 0}
-          >
-            Export
-          </button>
+          <div className="flex flex-row max-sm:flex-col gap-3">
+            <button
+              type="button"
+              ref={importButton}
+              className="btn btn-secondary! bg-gray-300 text-black! h-[30px]! w-[100px]! text-sm"
+              onClick={importDict}
+              disabled={translation.length == 0}
+            >
+              Import
+            </button>
+            <button
+              type="button"
+              ref={exportButton}
+              className="btn btn-secondary! bg-gray-300 text-black! h-[30px]! w-[100px]! text-sm"
+              onClick={exportDict}
+              disabled={translation.length == 0}
+            >
+              Export
+            </button>
+          </div>
           <button
             type="button"
             className="btn"
@@ -255,9 +277,19 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
         <div className="size-full flex flex-row items-end gap-x-5 place-content-end">
           <button
             type="button"
-            className="btn btn-error!"
+            className="btn btn-secondary! bg-gray-300 text-black! w-[160px]! h-[30px]! mb-3"
             disabled={translation.length == 0}
             ref={finalizeButton}
+            onClick={loadXML}
+          >
+            <span>load other .xml File</span>
+          </button>
+          <div className="flex-1" />
+          <button
+            type="button"
+            className="btn btn-error!"
+            disabled={translation.length == 0}
+            ref={loadXMLButton}
             onClick={selectSavePath}
           >
             <span>Save .xml File</span>

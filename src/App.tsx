@@ -34,7 +34,7 @@ const App = () => {
   useEffectOnce(() => {
     const unlisten = listen("tauri://drag-drop", async (event) => {
       const paths = (event.payload as { paths: string[] }).paths;
-      const result = await openXMLFile(paths[0]);
+      const result = await openXMLFile(rows, paths[0]);
       const autTrans = localStorage.getItem("autoTranslation");
       
       if (result.messageType == 1) {
