@@ -8,8 +8,8 @@ import { CssBaseline } from "@mui/material";
 
 import { useEffectOnce } from "react-use";
 
-import { openXMLFile } from "./AppModules";
-import { loadingFileAtom, messageAtom, translation, translationAtom } from "./Atoms";
+import { applyMasterDictionary, openXMLFile } from "./AppModules";
+import { loadingFileAtom, messageAtom, translation, translationAtom, autoTranslationAtom, unSavedTranslationAtom } from "./Atoms";
 import clsx from "clsx";
 
 const darkTheme = createTheme({
@@ -22,6 +22,7 @@ const App = () => {
   const [rows, setRows] = useAtom(translationAtom);
   const setLoadingFile = useSetAtom(loadingFileAtom);
   const setMessage = useSetAtom(messageAtom);
+  const [unSavedTranslation, setUnSavedTranslation] = useAtom(unSavedTranslationAtom);
   
   const columns: GridColDef[] = [
     { field: 'index', headerName: 'Index', width: 0 },
@@ -34,13 +35,21 @@ const App = () => {
     const unlisten = listen("tauri://drag-drop", async (event) => {
       const paths = (event.payload as { paths: string[] }).paths;
       const result = await openXMLFile(paths[0]);
+      const autTrans = localStorage.getItem("autoTranslation");
       
       if (result.messageType == 1) {
-        setLoadingFile(paths[0])
+        setLoadingFile(paths[0]);
         setRows(result.translations);
+        setMessage({type: 1, text: result.message})
+        if(autTrans == "true"){
+          const apply = await applyMasterDictionary(result.translations);
+          setRows(apply.translations);
+          setMessage({type: apply.messageType, text: apply.message});
+        }
       }else if(result.messageType == 2){
         setMessage({type: 2, text: result.message})
       }
+      setUnSavedTranslation(false);
     });
     
     return () => {
@@ -56,6 +65,7 @@ const App = () => {
       const newRows = [...rows]
       newRows[newRow.index].translatedText = newRow.translatedText
       setRows(newRows)
+      setUnSavedTranslation(true);
     }
     return nl;
   }

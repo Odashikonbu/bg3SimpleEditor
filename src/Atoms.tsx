@@ -1,10 +1,14 @@
 import { atom } from 'jotai'
+import { atomWithStorage } from 'jotai/utils'
 
-export type translation = {
-  index: number;
+export interface dictionary {
   contentuid: string;
   originText: string;
   translatedText: string;
+}
+
+export interface translation extends dictionary{
+  index: number;
 }
 
 export type result = {
@@ -21,3 +25,5 @@ export type message = {
 export const translationAtom = atom<translation[]>([])
 export const loadingFileAtom = atom<undefined|string>()
 export const messageAtom = atom<message>({type: 0, text: ""})
+export const autoTranslationAtom = atomWithStorage<boolean>("autoTranslation", true)
+export const unSavedTranslationAtom = atom<boolean>(false);

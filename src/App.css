@@ -4,7 +4,7 @@
 }
 
 html,body {
-  @apply size-full bg-base-100;
+  @apply size-full bg-base-100 overflow-hidden;
 }
 
 #root {
@@ -22,5 +22,5 @@ footer {
 }
 
 button.btn {
-  @apply btn-info text-info-content rounded-sm h-[50px] w-[170px];
+  @apply btn-info text-info-content rounded-sm h-[45px] w-[150px];
 }
