@@ -3,7 +3,7 @@ import { useAtom } from "jotai";
 import { ReactNode, useRef } from "react";
 import useSound from "use-sound";
 import clsx from "clsx";
-import { open, save, ask } from "@tauri-apps/plugin-dialog";
+import { open, save } from "@tauri-apps/plugin-dialog";
 import {
   autoTranslationAtom,
   loadingFileAtom,

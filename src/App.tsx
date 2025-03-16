@@ -9,7 +9,7 @@ import { CssBaseline } from "@mui/material";
 import { useEffectOnce } from "react-use";
 
 import { applyMasterDictionary, openXMLFile } from "./AppModules";
-import { loadingFileAtom, messageAtom, translation, translationAtom, autoTranslationAtom, unSavedTranslationAtom } from "./Atoms";
+import { loadingFileAtom, messageAtom, translation, translationAtom, unSavedTranslationAtom } from "./Atoms";
 import clsx from "clsx";
 
 const darkTheme = createTheme({
@@ -22,7 +22,7 @@ const App = () => {
   const [rows, setRows] = useAtom(translationAtom);
   const setLoadingFile = useSetAtom(loadingFileAtom);
   const setMessage = useSetAtom(messageAtom);
-  const [unSavedTranslation, setUnSavedTranslation] = useAtom(unSavedTranslationAtom);
+  const [_, setUnSavedTranslation] = useAtom(unSavedTranslationAtom);
   
   const columns: GridColDef[] = [
     { field: 'index', headerName: 'Index', width: 0 },
