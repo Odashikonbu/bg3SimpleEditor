@@ -205,6 +205,9 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
       } else if (event.key == "e" && event.ctrlKey && event.shiftKey && !saveDictButton.current?.disabled) {
         event.preventDefault();
         exportButton.current?.click();
+      }else if (event.key == "l" && event.ctrlKey && event.altKey && !saveDictButton.current?.disabled) {
+        event.preventDefault();
+        loadXMLButton.current?.click();
       }
     });
 
@@ -279,7 +282,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
             type="button"
             className="btn btn-secondary! bg-gray-300 text-black! w-[160px]! h-[30px]! mb-3"
             disabled={translation.length == 0}
-            ref={finalizeButton}
+            ref={loadXMLButton}
             onClick={loadXML}
           >
             <span>load other .xml File</span>
@@ -289,7 +292,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
             type="button"
             className="btn btn-error!"
             disabled={translation.length == 0}
-            ref={loadXMLButton}
+            ref={finalizeButton}
             onClick={selectSavePath}
           >
             <span>Save .xml File</span>
