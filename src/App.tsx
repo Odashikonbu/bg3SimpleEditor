@@ -1,34 +1,88 @@
 import { useAtom, useSetAtom } from "jotai";
 import { listen } from "@tauri-apps/api/event";
 import "./App.css";
-
-import { DataGrid, GridColDef, GridRowClassNameParams, GridToolbar } from '@mui/x-data-grid';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { CssBaseline } from "@mui/material";
+import "./AppLayout.css";
 
 import { useEffectOnce } from "react-use";
 
-import { applyMasterDictionary, openXMLFile } from "./AppModules";
-import { loadingFileAtom, messageAtom, translation, translationAtom, unSavedTranslationAtom } from "./Atoms";
-import clsx from "clsx";
+import { AgGridReact } from "ag-grid-react";
+import {
+  type GridOptions,
+  type ColDef,
+  themeMaterial,
+  colorSchemeDark,
+  CellValueChangedEvent,
+} from "ag-grid-community";
 
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-  },
-});
+import { applyMasterDictionary, openXMLFile } from "./AppModules";
+import {
+  loadingFileAtom,
+  messageAtom,
+  searchAtom,
+  translation,
+  translationAtom,
+  unSavedTranslationAtom,
+} from "./Atoms";
 
 const App = () => {
   const [rows, setRows] = useAtom(translationAtom);
   const setLoadingFile = useSetAtom(loadingFileAtom);
   const setMessage = useSetAtom(messageAtom);
   const [_, setUnSavedTranslation] = useAtom(unSavedTranslationAtom);
-  
-  const columns: GridColDef[] = [
-    { field: 'index', headerName: 'Index', width: 0 },
-    { field: 'contentuid', headerName: 'UUID', flex: 0.25, sortable: true, filterable: true },
-    { field: 'originText', headerName: 'Original Text', flex: 0.75, sortable: true, filterable: true },
-    { field: 'translatedText', headerName: 'Translated Text', flex: 1, sortable: true, editable: true, resizable: false, filterable: true },
+  const [searchText] = useAtom(searchAtom);
+
+  const gridOptions: GridOptions<translation> = {
+    stopEditingWhenCellsLoseFocus: true,
+    suppressMoveWhenColumnDragging: true,
+    getRowStyle: params => {
+      if (params.data?.originText != params.data?.translatedText) {
+          return { background: 'green' };
+      }
+    },
+    theme: themeMaterial
+      .withParams({
+        wrapperBorder: true,
+        headerRowBorder: true,
+        borderRadius: 0.5,
+        textColor: "white",
+        rowBorder: { style: "solid", width: 1, color: "#ffffff" },
+        columnBorder: { style: "dashed", color: "#ffffff" },
+      })
+      .withPart(colorSchemeDark),
+  };
+  const defaultColumnDef: ColDef = {
+    suppressMovable: true,
+    headerStyle: {
+      backgroundColor: "#121111",
+      fontWeight: "bold",
+      color: "white",
+    },
+  };
+
+  const columns: ColDef<translation>[] = [
+    {
+      field: "contentuid",
+      headerName: "UUID",
+      width: 120,
+      headerStyle: { borderRight: "solid 0.01px #474747" },
+    },
+    {
+      field: "originText",
+      headerName: "Original Text",
+      headerStyle: { borderRight: "solid 0.01px #474747" },
+    },
+    {
+      field: "translatedText",
+      headerName: "Translated Text",
+      resizable: false,
+      flex: 1,
+      editable: true,
+      cellEditor: 'agTextCellEditor',
+      cellEditorParams: {
+        outerHeight: 40,
+        innerHeight: 40
+      },
+    },
   ];
 
   useEffectOnce(() => {
@@ -36,72 +90,48 @@ const App = () => {
       const paths = (event.payload as { paths: string[] }).paths;
       const result = await openXMLFile(rows, paths[0]);
       const autTrans = localStorage.getItem("autoTranslation");
-      
+
       if (result.messageType == 1) {
         setLoadingFile(paths[0]);
         setRows(result.translations);
-        setMessage({type: 1, text: result.message})
-        if(autTrans == "true"){
+        setMessage({ type: 1, text: result.message });
+        if (autTrans == "true") {
           const apply = await applyMasterDictionary(result.translations);
           setRows(apply.translations);
-          setMessage({type: apply.messageType, text: apply.message});
+          setMessage({ type: apply.messageType, text: apply.message });
         }
-      }else if(result.messageType == 2){
-        setMessage({type: 2, text: result.message})
+      } else if (result.messageType == 2) {
+        setMessage({ type: 2, text: result.message });
       }
       setUnSavedTranslation(false);
     });
-    
+
     return () => {
-      unlisten.then(f => f());
-    }
+      unlisten.then((f) => f());
+    };
   });
 
-  const onUpdateRows = (nl: any, ol: any) => {
-    const newRow = nl as translation
-    const oldRow = ol as translation
-    console.log(newRow.index)
-    if(newRow.translatedText != oldRow.translatedText){
-      const newRows = [...rows]
-      newRows[newRow.index].translatedText = newRow.translatedText
-      setRows(newRows)
+  const onUpdateRows = (event: CellValueChangedEvent<translation>) => {
+    if (event.oldValue != event.newValue) {
+      const newRows = [...rows];
+      newRows[event.rowIndex as number].translatedText = event.newValue;
+      setRows(newRows);
       setUnSavedTranslation(true);
     }
-    return nl;
-  }
+  };
 
   return (
-    <ThemeProvider theme={darkTheme}>
-      <CssBaseline />
-      <div style={{ height: '100%', width: '100%' }}>
-        <DataGrid
-          columnVisibilityModel={{ index: false }}
-          rows={rows}
-          columns={columns}
-          getRowId={(row) => row.index}
-          processRowUpdate={onUpdateRows}
-          disableColumnMenu
-          disableColumnFilter
-          disableColumnSelector
-          disableDensitySelector
-          getRowClassName={(e: GridRowClassNameParams<translation>) => { 
-            return clsx({ "bg-green-700 text-white": e.row.originText != e.row.translatedText })
-          }}
-          slots={{ toolbar: GridToolbar }}
-          slotProps={{
-            toolbar: {
-              showQuickFilter: true,
-              printOptions: { disableToolbarButton: true },
-              csvOptions: { disableToolbarButton: true },
-            },
-          }}
-          onProcessRowUpdateError={ () => {} }
-          localeText={{ noRowsLabel: 'Drag&Drop .xml File' }}
-          paginationMode="client"
-          rowSelection={false}
-        />
-      </div>
-    </ThemeProvider>
+    <div className="size-full p-2">
+      <AgGridReact
+        rowHeight={40}
+        gridOptions={gridOptions}
+        defaultColDef={defaultColumnDef}
+        columnDefs={columns}
+        rowData={rows}
+        quickFilterText={searchText}
+        onCellValueChanged={(e) => onUpdateRows(e)}
+      />
+    </div>
   );
 };
 

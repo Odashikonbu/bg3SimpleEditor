@@ -1,0 +1,29 @@
+@import "tailwindcss";
+html,
+body {
+  @apply size-full select-none;
+}
+
+#root {
+  @apply size-full absolute;
+}
+
+header,
+footer {
+  @apply fixed w-full h-[100px] px-5 py-0;
+}
+
+header {
+  @apply top-0;
+}
+footer {
+  @apply bottom-0;
+}
+
+main {
+  @apply size-full py-[100px];
+}
+
+.ag-cell.ag-cell-inline-editing {
+  @apply h-[38px]! p-0!
+}

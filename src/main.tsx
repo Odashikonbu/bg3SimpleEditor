@@ -5,6 +5,8 @@ import AppLayout from "./AppLayout";
 
 import { DevTools } from 'jotai-devtools'
 import 'jotai-devtools/styles.css'
+import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community'; 
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
