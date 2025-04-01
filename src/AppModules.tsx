@@ -1,7 +1,7 @@
 import { exists, readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { basename, join, resourceDir } from '@tauri-apps/api/path';
 import { XMLParser, XMLBuilder } from 'fast-xml-parser';
-import { translation, result, message, dictionary } from "./Atoms";
+import { translation, result, message, dictionary, dictValue } from "./Atoms";
 import { parse, stringify,  } from 'yaml'
 
 export const openXMLFile = async(contentList: translation[],path: string):Promise<result> => {
@@ -60,38 +60,23 @@ export const writeXMLFile = async(contentList: translation[], filePath: string):
 }
 
 export const saveMasterDictionary = async(contentList: translation[] ): Promise<message> => {
-  const dictData = contentList.map((content) => {
-    return {
-      contentuid: content.contentuid,
-      originText: content.originText,
-      translatedText: content.translatedText,
-    }
-  })
+  const dictMap = new Map();
 
-  const dict:dictionary[] = []
   const masterDictPath = await join(await resourceDir(), "dict.yml")
   try{
-  
     if(await exists(masterDictPath)){
       try{
-        const yamlData = parse(await readTextFile(masterDictPath)) as translation[]
-        yamlData.forEach( (item) => dict.push(item))
+        const yamlData = parse(await readTextFile(masterDictPath))
+        for(const key in yamlData){
+          dictMap.set(key, yamlData[key])
+        }
       }catch(e){
         return { type: 2, text: "failed load existing dictionary file. please remove or move dict.yaml"}
       }
     }
-
-    dictData.forEach( (item) => {
+    contentList.forEach( (item) => {
       if(item.originText != item.translatedText) {
-        const foundIndex = dict.findIndex(
-          (dct) => dct.contentuid === item.contentuid && dct.originText === item.originText
-        );
-    
-        if (foundIndex !== -1) {
-          dict[foundIndex] = item;
-        } else {
-          dict.push(item);
-        }
+        dictMap.set(item.contentuid, {originText: item.originText, translatedText: item.translatedText,})
       }
     })
   }
@@ -99,7 +84,10 @@ export const saveMasterDictionary = async(contentList: translation[] ): Promise<
     return { type: 2, text: `error: ${e}`}
   }
 
-  await writeTextFile(masterDictPath, stringify(dict, {lineWidth: -1}));
+  if(dictMap.size == 0){
+    return { type: 1, text: `0 translation detected, no file saved` }
+  }
+  await writeTextFile(masterDictPath, stringify(dictMap, {lineWidth: -1}));
 
   return { type: 1, text: "translation saved!!!"}
 }
@@ -109,22 +97,19 @@ export const applyMasterDictionary = async(contentList: translation[]):Promise<r
   const masterDictPath = await join(await resourceDir(), "dict.yml")
   if(await exists(masterDictPath)){
     try{
-      const yamlData = parse(await readTextFile(masterDictPath)) as translation[]
+      const yamlData = parse(await readTextFile(masterDictPath))
 
-      yamlData.forEach( (item) => {
-        if(item.originText != item.translatedText) {
-          const foundIndex = newTranslation.findIndex(
-            (dct) => dct.contentuid === item.contentuid && dct.originText === item.originText
-          );
-      
-          if (foundIndex !== -1) {
-            newTranslation[foundIndex].translatedText = item.translatedText;
-          }
+      newTranslation.forEach((item) => {
+        const pattern = yamlData[item.contentuid]
+        console.log(pattern)
+        if(pattern != undefined && item.originText == pattern.originText){
+          item.translatedText = pattern.translatedText
         }
       })
 
       return { messageType: 1, message: `translation applied!!`, translations: newTranslation }
     }catch(e){
+      console.log(e)
       return { messageType: 2, message: `failed load existing dictionary file. please remove or move dict.yaml`, translations: [...contentList] }
     }
   }else{
@@ -136,17 +121,12 @@ export const importDictionary = async(contentList: translation[], path: string):
   const newTranslation = [...contentList];
   if(await exists(path)){
     try{
-      const yamlData = parse(await readTextFile(path)) as translation[]
+      const yamlData = parse(await readTextFile(path))
 
-      yamlData.forEach( (item) => {
-        if(item.originText != item.translatedText) {
-          const foundIndex = newTranslation.findIndex(
-            (dct) => dct.contentuid === item.contentuid && dct.originText === item.originText
-          );
-      
-          if (foundIndex !== -1) {
-            newTranslation[foundIndex].translatedText = item.translatedText;
-          }
+      newTranslation.forEach((item) => {
+        const pattern = yamlData[item.contentuid]
+        if(pattern != undefined && item.originText == pattern.originText){
+          item.translatedText = pattern.translatedText
         }
       })
 
@@ -160,19 +140,11 @@ export const importDictionary = async(contentList: translation[], path: string):
 }
 
 export const exportDictionary = async(contentList: translation[], path: string):Promise<message> => {
-  const dictData = contentList.map((content) => {
-    return {
-      contentuid: content.contentuid,
-      originText: content.originText,
-      translatedText: content.translatedText,
-    }
-  })
-
-  const dict:dictionary[] = []
+  const dictMap = new Map();
   try{
-    dictData.forEach( (item) => {
+    contentList.forEach( (item) => {
       if(item.originText != item.translatedText) {
-        dict.push(item);
+        dictMap.set(item.contentuid, {originText: item.originText, translatedText: item.translatedText,})
       }
     })
   }
@@ -180,16 +152,17 @@ export const exportDictionary = async(contentList: translation[], path: string):
     return { type: 2, text: `error: ${e}`}
   }
 
-  if(dict.length == 0){
+  if(dictMap.size == 0){
     return { type: 2, text: "0 translation detected, no file saved"}
   }
-  await writeTextFile(path, stringify(dict, {lineWidth: -1}));
+  await writeTextFile(path, stringify(dictMap, {lineWidth: -1}));
 
   return { type: 1, text: "translation exported!!!"}
 
 }
 
 export const loadTranslation = async(contentList: translation[], path: string):Promise<result> => {
+  const dictMap = new Map();
   try {
     const xml = await readTextFile(path);
     const newTranslation = [...contentList];
@@ -197,25 +170,30 @@ export const loadTranslation = async(contentList: translation[], path: string):P
     const parser = new XMLParser({ ignoreAttributes: false });
     const result = parser.parse(xml);
 
+    console.log(result);
+
     if (!result.contentList || !Array.isArray(result.contentList.content)) {
       return { messageType: 2, message: "invalid xml!!!", translations: contentList }
     }
 
-    const loadedContent: dictionary[] = result.contentList.content.map((item: any) => ({
-      contentuid: item['@_contentuid'],
-      originText: item['#text'],
-      translatedText: item['#text'],
-    }));
+    const contents:dictionary[] = result.contentList.content.map((item: any) => {
+      return {
+        contentuid: item['@_contentuid'],
+        originText: item['#text'],
+        translatedText: item['#text'],
+      }})
 
-    console.log(loadedContent)
+    console.log(contents)
+    contents.forEach((item: dictionary) => {
+      dictMap.set(item.contentuid, {originText: item.originText, translatedText: item.translatedText,})
+    });
+    console.log(dictMap)
 
-    loadedContent.forEach( (item) => {
-      const foundIndex = newTranslation.findIndex(
-        (dct) => dct.contentuid === item.contentuid
-      );
-  
-      if (foundIndex !== -1) {
-        newTranslation[foundIndex].translatedText = item.translatedText;
+    
+    newTranslation.forEach((item) => {
+      const pattern = dictMap.get(item.contentuid) as dictValue
+      if(pattern != undefined){
+        item.translatedText = pattern.translatedText
       }
     })
 

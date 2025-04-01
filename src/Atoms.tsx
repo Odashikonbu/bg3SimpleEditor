@@ -1,10 +1,13 @@
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 
-export interface dictionary {
-  contentuid: string;
+export interface dictValue {
   originText: string;
   translatedText: string;
+}
+
+export interface dictionary extends dictValue {
+  contentuid: string;
 }
 
 export interface translation extends dictionary {

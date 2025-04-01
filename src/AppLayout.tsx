@@ -24,7 +24,7 @@ import {
 } from "./AppModules";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { SearchIcon } from "lucide-react";
@@ -263,7 +263,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
           <div className="flex flex-row items-center gap-x-5">
             <SearchIcon size={18} />
             <Input
-              className="w-[220px] h-[29px] text-sm"
+              className="w-[220px] h-[29px] text-sm bg-black border-2 border-red-500"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
             />
@@ -280,11 +280,11 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
             >
               <span>Close</span>
             </Button>
-            <div className="flex flex-col items-center gap-x-1">
+            <div className="flex flex-row max-sm:flex-col items-center gap-x-1">
               <label htmlFor="auto-translate" className="text-sm text-center truncate w-[120px] max-sm:w-[60px]">
                 auto translation
               </label>
-              <Checkbox
+              <Switch
                 id="auto-translate"
                 onCheckedChange={() => setAutoTranslation(!autoTranslation)}
                 checked={autoTranslation}
