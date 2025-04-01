@@ -34,6 +34,7 @@ const App = () => {
   const gridOptions: GridOptions<translation> = {
     stopEditingWhenCellsLoseFocus: true,
     suppressMoveWhenColumnDragging: true,
+    suppressScrollOnNewData: true,
     getRowStyle: params => {
       if (params.data?.originText != params.data?.translatedText) {
           return { background: 'green' };
@@ -114,7 +115,7 @@ const App = () => {
   const onUpdateRows = (event: CellValueChangedEvent<translation>) => {
     if (event.oldValue != event.newValue) {
       const newRows = [...rows];
-      newRows[event.rowIndex as number].translatedText = event.newValue;
+      newRows[event.data.index].translatedText = event.newValue;
       setRows(newRows);
       setUnSavedTranslation(true);
     }
